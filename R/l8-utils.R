@@ -42,11 +42,30 @@ mask_clouds <- function(img){
   img
 }
 
+#' l8_collect_mask_clouds
+#'
+#' @param img.coll
+#'
+#' @return
+#' @export
+#'
+#' @examples
 l8_collect_mask_clouds <- function(img.coll){
   img.coll$map(mask_clouds)
 }
 
 
+#' l8_collect
+#'
+#' @param aoi
+#' @param start.date
+#' @param end.date
+#' @param min.cloud
+#'
+#' @return
+#' @export
+#'
+#' @examples
 l8_collect <- function(aoi, start.date, end.date, min.cloud=90){
   aoi_ee <- sf_as_ee(aoi)
 
@@ -63,13 +82,29 @@ l8_collect <- function(aoi, start.date, end.date, min.cloud=90){
     filterDate(start.date, end.date)
 }
 
-# //NDVI
+
+#' l8_add_ndvi
+#'
+#' @param img
+#'
+#' @return
+#' @export
+#'
+#' @examples
 l8_add_ndvi <- function(img) {
   ndvi <- img$normalizedDifference(c('B5', 'B4'))$rename('NDVI');
   img$addBands(ndvi)
 }
 
 
+#' l8_add_evi
+#'
+#' @param img
+#'
+#' @return
+#' @export
+#'
+#' @examples
 l8_add_evi <- function(img){
   evi <- img$expression(
     expression = '2.5 * ((NIR - RED) / (NIR + 6 * RED - 7.5 * BLUE + 1))',

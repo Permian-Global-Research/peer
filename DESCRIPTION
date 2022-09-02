@@ -2,10 +2,10 @@ Package: peer
 Title: Permian Earth Engine Repo (peer)
 Version: 0.0.0.9000
 Authors@R: 
-    person("Hugh", "Graham", , "hugh.graham@permianglobal.com", role = c("aut", "cre"),
-           comment = c(ORCID = "0000-0001-9451-5010"))
+    c(person("Hugh", "Graham", , "hugh.graham@permianglobal.com", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0001-9451-5010")),
     person("Javier", "Ruiz Ramos", , "javier.ruizramos@permianglobal.com", role = c("aut"),
-           comment = c(ORCID = "0000-0003-4210-3887"))
+           comment = c(ORCID = "0000-0003-4210-3887")))
 Description: What the package does (one paragraph).
 License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
     license
@@ -14,3 +14,6 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.2
 Imports: 
     rgee
+Depends: 
+    R (>= 2.10)
+LazyData: true

@@ -13,27 +13,62 @@ knitr::opts_chunk$set(
 )
 ```
 
-# peerm
+# peer
 
 <!-- badges: start -->
+
 <!-- badges: end -->
 
-The goal of peerm is to provide easy access to useful rgee functions - like composites etc.
+The goal of peerm is to provide easy access to useful [{rgee}](https://r-spatial.github.io/rgee/) functions - like composites etc.
 
 ## Installation
 
 You can install the development version of peerm from [GitHub](https://github.com/) with:
 
 ``` r
-# install.packages("devtools")
-devtools::install_github("h-a-graham/peerm")
+# install.packages("remotes")
+remotes::install_github("Permian-Global-Research/peer")
 ```
 
 ## Example
 
-This is a basic example which shows you how to solve a common problem:
+Quick example creating a False Colour Composite from Landsat 8 data.
 
-```{r example}
-# library(peerm)
-## basic example code
+
+```{r example, warn=FALSE, eval=FALSE}
+library(rgee)
+ee_Initialize(quiet=TRUE)
+library(peer)
+library(sf)
+
+# get Landsat 8 collection from date range and cloud cover filters.
+comp2021 <- l8_collect(aoi=kuamut,
+                       start.date = '2021-01-01',
+                       end.date= '2021-12-31',
+                       min.cloud=50)
+
+x <- comp2021$
+  map(l8_add_evi)$ # function to add EVI 
+  map(l8_add_ndvi) # function to add NDVI
+
+
+x_img <- l8_collect_mask_clouds(x)$ # landsat 8 cloud and shadow mask.
+  median()
+
+
+vizParams <- list(
+  bands = c('B4', 'B4', 'B2'),
+  min= 0,
+  max= 1000,
+  gamma= c(0.95, 1.1, 1)
+)
+
+aoi_cent <- st_centroid(kuamut) %>%
+  st_coordinates()
+
+Map$setCenter(lon = aoi_cent[1], lat = aoi_cent[2], zoom = 10)
+
+Map$addLayer(x_img, vizParams, 'FC-composite-2021')
 ```
+
+![FCC-example](man/FCC-21.png)

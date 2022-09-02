@@ -44,9 +44,9 @@ l8_correct_terrain <-  function(collection, dem) {
 
      img_plus_ic = img
      mask1 = img_plus_ic$select('nir')$gt(-0.1)
-     mask2 = img_plus_ic$select('slope')$gte(5)
-    $and(img_plus_ic$select('IC')$gte(0))
-    $and(img_plus_ic$select('nir')$gt(-0.1))
+     mask2 = img_plus_ic$select('slope')$gte(5)$
+       and(img_plus_ic$select('IC')$gte(0))$
+       and(img_plus_ic$select('nir')$gt(-0.1))
      img_plus_ic_mask2 = ee$Image(img_plus_ic$updateMask(mask2))
 
     # // Specify Bands to topographically correct
