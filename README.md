@@ -49,10 +49,11 @@ x_img <- l8_collect_mask_clouds(x)$ # landsat 8 cloud and shadow mask.
 
 
 vizParams <- list(
-  bands = c('B4', 'B4', 'B2'),
+  bands = c('B3', 'B4', 'B5'),
   min= 0,
   max= 1000,
-  gamma= c(0.95, 1.1, 1)
+  gamma= c(1.1, 0.95, 0.7)
+  # bias = c(0.5, 0.1, 0.3)
 )
 
 aoi_cent <- st_centroid(kuamut) %>%
@@ -60,7 +61,7 @@ aoi_cent <- st_centroid(kuamut) %>%
 
 Map$setCenter(lon = aoi_cent[1], lat = aoi_cent[2], zoom = 10)
 
-Map$addLayer(x_img, vizParams, 'FC-composite-2021')
+m <- Map$addLayer(x_img, vizParams, 'FC-composite-2021')
 ```
 
 ![FCC-example](man/FCC-21.png)
