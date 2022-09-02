@@ -11,3 +11,6 @@
 img_band_names <- function(img){
   img$bandNames()$getInfo()
 }
+
+
+

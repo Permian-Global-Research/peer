@@ -7,6 +7,7 @@
 
 [![Lifecycle:
 experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
+
 <!-- badges: end -->
 
 The goal of peerm is to provide easy access to useful
@@ -53,7 +54,6 @@ vizParams <- list(
   min= 0,
   max= 1000,
   gamma= c(1.1, 0.95, 0.7)
-  # bias = c(0.5, 0.1, 0.3)
 )
 
 aoi_cent <- st_centroid(kuamut) %>%
