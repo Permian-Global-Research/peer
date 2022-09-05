@@ -12,20 +12,32 @@
 #' @export
 #'
 #' @examples
-l8_terrain_correct <- function(x, aoi,  dem.src=c("glo30", "srtm"), buf=10000) {
+l8_terrain_correct <- function(x, aoi,  dem.src=c("glo30", "srtm"), buf=10000,
+                               mask=FALSE) {
+  aoi <- return_ee_geom(aoi)
 
+  # if (isFALSE(mask)){
+  #   aoi <- ee_geom_bounds(aoi)
+  # }
+  # aoi <- sf_as_ee(aoi)
+  # aoi <- ee_geom_bounds(aoi)
+  # aoi <-aoi$union()$geometry()$bounds()
+  # return(aoi)
   dem <- dem_as_image(aoi, dem.src)
+  # dem <- ee$Image("USGS/SRTMGL1_003")
 
   combine_illumes <- function(img){
     img <- illuminationCondition(img, dem, buf)
     illuminationCorrection(img, dem, buf)
   }
 
+  # x <- x$clipToCollection(aoi)
 
   if (inherits(x, "ee.image.Image" )){
-    return(combine_illumes(x))
+    return(combine_illumes(x)$
+             clip(aoi))
   } else if (inherits(x, "ee.imagecollection.ImageCollection")){
-    return(x$map(illuminationCondition))
+    return(x$map(combine_illumes))
   }
 
   # collection = collection$map(illuminationCondition, dem)
@@ -39,7 +51,7 @@ illuminationCondition <- function (img, dem, buf=10000){
 
   # // Extract image metadata about solar position
   SZ_rad = ee$Image$constant(ee$Number(img$get('SOLAR_ZENITH_ANGLE')))$multiply(pi)$divide(180)$clip(img$geometry()$buffer(buf))
-  SA_rad = ee$Image$constant(ee$Number(img$get('SOLAR_AZIMUTH_ANGLE'))$multiply(pi)$divide(180))$clip(img$geometry()$buffer(buf)) # CHECK PARENS HERE! DIFFERENT TO ABOVE.
+  SA_rad = ee$Image$constant(ee$Number(img$get('SOLAR_AZIMUTH_ANGLE')))$multiply(pi)$divide(180)$clip(img$geometry()$buffer(buf)) # CHECK PARENS HERE! DIFFERENT TO ABOVE.
   # // Creat terrain layers
   slp = ee$Terrain$slope(dem)$clip(img$geometry()$buffer(buf))
   slp_rad = ee$Terrain$slope(dem)$multiply(pi)$divide(180)$clip(img$geometry()$buffer(buf))
@@ -86,7 +98,7 @@ illuminationCorrection <- function (img, dem, buf=10000){
   st = img$get('system:time_start')
 
   img_plus_ic = img
-  mask1 = img_plus_ic$select('nir')$gt(-0.1)
+  mask1 = img_plus_ic$select('B5')$gt(-0.1)
 
   mask2 <- function(ic){
     ma <- ic$select('slope')$gte(5)
@@ -95,7 +107,7 @@ illuminationCorrection <- function (img, dem, buf=10000){
     ma$add(mb)$add(mc)$select('slope')$gte(1)
   }
 
-  img_plus_ic_mask2 = ee$Image(img_plus_ic$updateMask(mask2(img_plus_ic)))
+  img_plus_ic_mask2 = ee$Image(img_plus_ic$updateMask(mask1)) #mask2(img_plus_ic)
 
   # // Specify Bands to topographically correct
   bandList = c('B2','B3','B4','B5','B6','B7')
@@ -104,13 +116,14 @@ illuminationCorrection <- function (img, dem, buf=10000){
 
   geom = ee$Geometry(img$get('system:footprint'))$bounds()$buffer(buf)
 
-  apply_SCSccorr <- function (band){
-    method = 'SCSc'
+  apply_SCSccorr <- ee_utils_pyfunc(function (band){
+    # method = 'SCSc'
+
     out = img_plus_ic_mask2$select('IC', band)$reduceRegion(
       reducer= ee$Reducer$linearFit(), #// Compute coefficients: a(slope), b(offset), c(b/a)
       geometry= ee$Geometry(img$geometry()$buffer(-5000)), #// trim off the outer edges of the image for linear relationship
       scale= 300,
-      maxPixels= buf
+      maxPixels= 1000000000
     )
 
     if (is.null(out) | out == "undefined") {
@@ -135,23 +148,38 @@ illuminationCorrection <- function (img, dem, buf=10000){
       return (SCSc_output)
     }
 
+  })
+
+  # everything about this section feels not very R ish - not a fan but it works.
+  SCSccorr <- apply_SCSccorr(bandList[1])
+
+  for (i in bandList[2:length(bandList)]){
+    x <- apply_SCSccorr(i)
+    SCSccorr <- SCSccorr$addBands(x)
   }
 
-  SCSccorr<- bandList|>
-    lapply(apply_SCSccorr)
 
-  img_SCSccorr = ee$Image(SCSccorr)$
+  # SCSccorr <- ee$List(bandList)$
+  #   map(apply_SCSccorr)
+  # return(SCSccorr)
+  # img_SCSccorr = ee$Image(ee$List(bandList)$map(apply_SCSccorr))$addBands(img_plus_ic$select('IC'))
+
+  img_SCSccorr <- SCSccorr$
     addBands(img_plus_ic$select('IC'))
 
-  bandList_IC = ee$List(c(bandList, 'IC'))$
+  # return(ee$Image(SCSccorr))
+  bandList_IC <- ee$List(c(bandList, 'IC'))$
     flatten()
 
   img_SCSccorr = img_SCSccorr$unmask(img_plus_ic$select(bandList_IC))$select(bandList)
 
+  img_SCSccorr <- img_SCSccorr$
+  select(bandList)$
+  addBands(nonCorrectBands)$
+  setMulti(props)$
+  set('system:time_start', st)
+
   return (
-    img_SCSccorr$
-      addBands(nonCorrectBands)$
-      setMulti(props)$
-      set('system:time_start', st)
+    ee$Image(img_SCSccorr)
   )
 }

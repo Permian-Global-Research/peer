@@ -10,8 +10,12 @@
 #' @export
 #'
 #' @examples
-dem_as_image <- function(aoi, dem.src=c("glo30", "srtm")){
-  aoi_ee <- sf_as_ee(aoi)
+dem_as_image <- function(aoi, dem.src=c("glo30", "srtm"), mask=FALSE){ #
+  aoi_ee <- return_ee_geom(aoi)
+
+  if (isFALSE(mask)){
+    aoi_ee <- ee_geom_bounds(aoi_ee)
+  }
 
   if (dem.src[1]=="glo30"){
     dem.collect<- "projects/sat-io/open-datasets/GLO-30"
