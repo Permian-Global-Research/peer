@@ -24,7 +24,6 @@ l8_terrain_correct <- function(x, aoi,  dem.src=c("glo30", "srtm"), buf=10000,
   # aoi <-aoi$union()$geometry()$bounds()
   # return(aoi)
   dem <- dem_as_image(aoi, dem.src)
-  # dem <- ee$Image("USGS/SRTMGL1_003")
 
   combine_illumes <- function(img){
     img <- illuminationCondition(img, dem, buf)
