@@ -12,9 +12,11 @@
 #' @export
 #'
 #' @examples
-l8_terrain_correct <- function(x, aoi,  dem.src=c("glo30", "srtm"), buf=10000,
+l8_terrain_correct <- function(x, aoi.sf,  dem.src=c("glo30", "srtm"), buf=10000,
                                mask=FALSE) {
-  aoi <- return_ee_geom(aoi)
+  aoi <- sf_ext_as_ee(aoi.sf)
+
+  # aoi <- return_ee_geom(aoi)
 
   # if (isFALSE(mask)){
   #   aoi <- ee_geom_bounds(aoi)
@@ -36,7 +38,7 @@ l8_terrain_correct <- function(x, aoi,  dem.src=c("glo30", "srtm"), buf=10000,
     return(combine_illumes(x)$
              clip(aoi))
   } else if (inherits(x, "ee.imagecollection.ImageCollection")){
-    return(x$map(combine_illumes))
+    return(x$map(combine_illumes)) #$map(function(x) x$clip(aoi))
   }
 
   # collection = collection$map(illuminationCondition, dem)
@@ -124,11 +126,15 @@ illuminationCorrection <- function (img, dem, buf=10000){
       scale= 300,
       maxPixels= 1000000000
     )
-
-    if (is.null(out) | out == "undefined") {
-      #out === null || out === undefined
-      return (img_plus_ic_mask2$select(band))
-    } else {
+    # .info <- out$getInfo()|>
+    #   sapply(is.null)
+    # if (all(.info)) {
+    # if (is.null(out)) { # this bit will never work.
+    #
+    #   #out === null || out === undefined
+    #   return (img_plus_ic_mask2$select(band)) # changed from original
+    #   # return(NULL)
+    # } else {
       out_a = ee$Number(out$get('scale'))
       out_b = ee$Number(out$get('offset'))
       out_c = out_b$divide(out_a)
@@ -145,7 +151,7 @@ illuminationCorrection <- function (img, dem, buf=10000){
       )
 
       return (SCSc_output)
-    }
+    # }
 
   })
 
@@ -154,7 +160,9 @@ illuminationCorrection <- function (img, dem, buf=10000){
 
   for (i in bandList[2:length(bandList)]){
     x <- apply_SCSccorr(i)
-    SCSccorr <- SCSccorr$addBands(x)
+    if (!is.null(x)) { # unnecessary but maybe useful if I figure out the null screening within the fucntion.
+      SCSccorr <- SCSccorr$addBands(x)
+    }
   }
 
 
