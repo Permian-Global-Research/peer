@@ -70,7 +70,7 @@ aoi_cent <- st_centroid(kuamut) %>%
   st_coordinates()
 
 Map$setCenter(lon = aoi_cent[1], lat = aoi_cent[2], zoom = 10)
-m<-Map$addLayer(x_img$clip(plt.aoi), vizParams, 'FC-composite-2021')+
+m<-Map$addLayer(x_img, vizParams, 'FC-composite-2021')
 ```
 
 ![FCC-example](man/FCC-21.png)

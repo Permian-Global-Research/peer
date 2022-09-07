@@ -4,13 +4,7 @@
 \alias{l8_terrain_correct}
 \title{l8_terrain_correct}
 \usage{
-l8_terrain_correct(
-  x,
-  aoi.sf,
-  dem.src = c("glo30", "srtm"),
-  buf = 10000,
-  mask = FALSE
-)
+l8_terrain_correct(x, aoi.sf, buf = 10000, mask = FALSE)
 }
 \arguments{
 \item{x}{either an earth engine Collection or Image}

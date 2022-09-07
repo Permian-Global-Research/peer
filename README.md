@@ -38,15 +38,17 @@ library(sf)
 comp2021 <- l8_collect(aoi=kuamut,
                        start.date = '2021-01-01',
                        end.date= '2021-12-31',
-                       min.cloud=50)
+                       min.cloud=50)|>
+  l8_mask_clouds()|>   #function mask clouds
+  l8_terrain_correct(aoi.sf = kuamut) # function to run terrain correction
 
-x <- comp2021$
+x_img <- comp2021$
   map(l8_add_evi)$ # function to add EVI 
-  map(l8_add_ndvi) # function to add NDVI
-
-
-x_img <- l8_collect_mask_clouds(x)$ # landsat 8 cloud and shadow mask.
+  map(l8_add_ndvi)$ # function to add NDVI
   median()
+
+# x_img <- l8_mask_clouds(x)$ # landsat 8 cloud and shadow mask.
+#   median()
 
 
 vizParams <- list(
@@ -60,8 +62,7 @@ aoi_cent <- st_centroid(kuamut) %>%
   st_coordinates()
 
 Map$setCenter(lon = aoi_cent[1], lat = aoi_cent[2], zoom = 10)
-
-m <- Map$addLayer(x_img, vizParams, 'FC-composite-2021')
+m<-Map$addLayer(x_img, vizParams, 'FC-composite-2021')
 ```
 
 ![FCC-example](man/FCC-21.png)

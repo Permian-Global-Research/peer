@@ -50,7 +50,7 @@ l8_mask_clouds <- function(x){
     cl <- remove_cloud_n_shadows(img, 5, 5)
     img = img$updateMask(cl.sh)
     img = img$updateMask(cl)
-    img <- img$addBands(c(cl.sh, cl))
+    # img <- img$addBands(c(cl.sh, cl))
     img
   }
 
