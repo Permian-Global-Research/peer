@@ -17,11 +17,14 @@ etc.
 ## Installation
 
 You can install the development version of peerm from
-[GitHub](https://github.com/) with:
+[GitHub](https://github.com/):
+
+first clone the library - SSH probably best option. Then open the
+project and run the following in R:
 
 ``` r
-# install.packages("remotes")
-remotes::install_github("Permian-Global-Research/peer")
+# install.packages("devtools")
+devtools::install()
 ```
 
 ## Example
