@@ -1,3 +1,51 @@
+#' get projection of spatial object
+#'
+#' cloud mask an l8 image or collection
+#' @title l8_mask_clouds: cloud mask an l8 image or collection
+#'
+#' @param x ...
+#' @param aoi.sf
+#' @param buf
+#' @param mask
+#' @param ... Not currently used
+#'
+#' @export
+l8_terrain_correct <- function(x, aoi.sf, buf=10000,
+                               mask=FALSE, ...) {
+  UseMethod("l8_terrain_correct")
+}
+
+#' @rdname l8_terrain_correct
+#'
+#' @export
+l8_terrain_correct.ee.image.Image <- function(x, aoi.sf, buf=10000,
+                                              mask=FALSE){
+
+  dtm.aoi <- l8_terrain_correct_method(x, aoi.sf, buf=buf,
+                            mask=mask)
+
+  x <- illuminationCondition(x, dtm.aoi$dem, buf)
+  return(illuminationCorrection(x, dem, buf)# $ clip(dtm.aoi$aoi)
+         )
+}
+
+#' @rdname l8_terrain_correct
+#'
+#' @export
+l8_terrain_correct.ee.imagecollection.ImageCollection <- function(x, aoi.sf, buf=10000,
+                                              mask=FALSE){
+
+  dtm.aoi <- l8_terrain_correct_method(x, aoi.sf, buf=buf,
+                                       mask=mask)
+
+  combine_illumes <- function(img){
+    img <- illuminationCondition(img, dtm.aoi$dem, buf)
+    img <- illuminationCorrection(x, dem, buf)
+  }
+
+  return(x$map(combine_illumes)) #$map(function(x) x$clip(aoi))
+}
+
 
 
 #' l8_terrain_correct
@@ -11,7 +59,7 @@
 #' @export
 #'
 #' @examples
-l8_terrain_correct <- function(x, aoi.sf, buf=10000,
+l8_terrain_correct_method <- function(x, aoi.sf, buf=10000,
                                mask=FALSE) {
   dem.src ="srtm"
   message(crayon::bgCyan(crayon::bgMagenta(
@@ -24,17 +72,17 @@ results make sure you have already run `peer::l8_mask_clouds"
 
   dem <- dem_as_image(aoi, dem.src)
 
-  combine_illumes <- function(img){
-    img <- illuminationCondition(img, dem, buf)
-    illuminationCorrection(img, dem, buf)
-  }
+  return(list(dem=dem, aoi=aoi))
 
-  if (inherits(x, "ee.image.Image" )){
-    return(combine_illumes(x))
-  } else if (inherits(x, "ee.imagecollection.ImageCollection")){
-    return(x$map(combine_illumes)) #$map(function(x) x$clip(aoi))
-  }
+  # if (inherits(x, "ee.image.Image" )){
+  #   return(combine_illumes(x))
+  # } else if (inherits(x, "ee.imagecollection.ImageCollection")){
+  #   return(x$map(combine_illumes)) #$map(function(x) x$clip(aoi))
+  # }
 }
+
+
+
 
 
 illuminationCondition <- function (img, dem, buf=10000){

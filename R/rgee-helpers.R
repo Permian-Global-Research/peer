@@ -60,3 +60,14 @@ sf_ext_as_ee <- function(x){
 
 
 
+#' clip an image add properties.
+#'
+#' @param img
+#' @param aoi
+#'
+#' @return clipped img
+subset_bounds <- function(img, aoi) {
+  # // Crop by table extension
+  img$clip(aoi)$
+    copyProperties(img,c('system:time_start','system:time_end'))
+}

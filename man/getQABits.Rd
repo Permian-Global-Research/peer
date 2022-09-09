@@ -2,7 +2,7 @@
 % Please edit documentation in R/l8-utils.R
 \name{getQABits}
 \alias{getQABits}
-\title{Title}
+\title{getQABits}
 \usage{
 getQABits(img, start, end, newName)
 }
@@ -13,5 +13,5 @@ getQABits(img, start, end, newName)
 
 }
 \description{
-Title
+getQABits
 }

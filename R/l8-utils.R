@@ -1,6 +1,6 @@
 
 
-#' Title
+#' getQABits
 #'
 #' @param img
 #' @param start
@@ -8,9 +8,6 @@
 #' @param newName
 #'
 #' @return
-#' @export
-#'
-#' @examples
 getQABits <- function(img, start, end, newName) {
   # // Compute the bits we need to extract.
   pattern <- sapply(c(start:end), function(x) 2 ^x) |>
@@ -35,35 +32,46 @@ remove_cloud_n_shadows = function(img, base_start, base_end) {
 }
 
 
-#' l8_collect_mask_clouds
-#'
-#' @param x
-#'
-#' @return
-#' @export
-#'
-#' @examples
-l8_mask_clouds <- function(x){
 
-  mask_clouds <- function(img){
+#' mask_clouds_l8_method
+#'
+#' @param img an earth engine ee image
+#'
+#' @return a cloud masked ee image
+mask_clouds_l8_method <- function(img){
     cl.sh <- remove_cloud_n_shadows(img, 3, 3)
     cl <- remove_cloud_n_shadows(img, 5, 5)
     img = img$updateMask(cl.sh)
     img = img$updateMask(cl)
     # img <- img$addBands(c(cl.sh, cl))
     img
-  }
-
-  if (inherits(x, "ee.image.Image" )){
-    return(mask_clouds(x))
-  } else if (inherits(x, "ee.imagecollection.ImageCollection")){
-    return(x$map(mask_clouds))
-  }
-
-
-
-  img.coll$map(mask_clouds)
 }
+
+#' get projection of spatial object
+#'
+#' cloud mask an l8 image or collection
+#' @title l8_mask_clouds: cloud mask an l8 image or collection
+#' @param x An ee Image or ImageCollection
+#'  @param ... Not currently used.
+#' @export
+l8_mask_clouds <- function(x, ...) {
+  UseMethod("l8_mask_clouds")
+}
+
+#' @rdname l8_mask_clouds
+#'
+#' @export
+l8_mask_clouds.ee.image.Image <- function(x, ...){
+  mask_clouds_l8_method(x)
+}
+
+#' @rdname l8_mask_clouds
+#'
+#' @export
+l8_mask_clouds.ee.imagecollection.ImageCollection <- function(x, ...){
+  x$map(mask_clouds_l8_method)
+}
+
 
 
 #' l8_collect

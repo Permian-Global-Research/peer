@@ -2,16 +2,23 @@
 % Please edit documentation in R/l8-utils.R
 \name{l8_mask_clouds}
 \alias{l8_mask_clouds}
-\title{l8_collect_mask_clouds}
+\alias{l8_mask_clouds.ee.image.Image}
+\alias{l8_mask_clouds.ee.imagecollection.ImageCollection}
+\title{l8_mask_clouds: cloud mask an l8 image or collection}
 \usage{
-l8_mask_clouds(x)
+l8_mask_clouds(x, ...)
+
+\method{l8_mask_clouds}{ee.image.Image}(x, ...)
+
+\method{l8_mask_clouds}{ee.imagecollection.ImageCollection}(x, ...)
 }
 \arguments{
-\item{x}{}
-}
-\value{
-
+\item{x}{An ee Image or ImageCollection
+@param ... Not currently used.}
 }
 \description{
-l8_collect_mask_clouds
+get projection of spatial object
+}
+\details{
+cloud mask an l8 image or collection
 }
