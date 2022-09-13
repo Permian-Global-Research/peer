@@ -4,10 +4,15 @@
 \alias{s1_collect}
 \title{s1_collect}
 \usage{
-s1_collect(aoi, start.date, end.date)
+s1_collect(
+  aoi,
+  start.date,
+  end.date,
+  orbit.pass = c("DESCENDING", "ASCENDING")
+)
 }
 \arguments{
-\item{end.date}{}
+\item{orbit.pass}{Default 'DESCENDING'. Must be either}
 }
 \value{
 

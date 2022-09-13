@@ -13,13 +13,19 @@ l8_terrain_correct(x, aoi.sf, buf = 10000, mask = FALSE, ...)
 \method{l8_terrain_correct}{ee.imagecollection.ImageCollection}(x, aoi.sf, buf = 10000, mask = FALSE)
 }
 \arguments{
-\item{x}{...}
+\item{x}{An landsat8 ee image or image colletion.}
+
+\item{aoi.sf}{An area of interest as an sf or sfc object.}
+
+\item{buf}{default 10000. The buffer distance.}
+
+\item{mask}{currently ignored.}
 
 \item{...}{Not currently used}
 }
 \description{
-get projection of spatial object
+Terrain iluminaton correction for landsat 8.
 }
 \details{
-cloud mask an l8 image or collection
+correct illumination effect for Landsat8 collection/images.
 }

@@ -1,3 +1,23 @@
+#' Get nth item from an ee collection
+#'
+#' @param collect
+#' @param n
+#'
+#' @return The entire unclipped image at the nth position of the collection.
+#' @export
+#'
+#' @examples
+#' s1.test <- s1_collect(kuamut, '2019-01-01', '2019-12-31' )
+#' s1_nth(s1.test, 3)
+#'
+get_nth <- function(collect, n){
+  # p <- collect$first()$propertyNames()
+  i <- collect$aggregate_array('system:id')$get(n)
+  ee$Image(i$getInfo())
+}
+
+
+
 #' img_band_names
 #'
 #' get ee_image band names as a raster
@@ -68,6 +88,121 @@ sf_ext_as_ee <- function(x){
 #' @return clipped img
 subset_bounds <- function(img, aoi) {
   # // Crop by table extension
-  img$clip(aoi)$
-    copyProperties(img,c('system:time_start','system:time_end'))
+  x <- img$clip(aoi)
+  x$copyProperties(img,c('system:time_start','system:time_end'))
+  x
 }
+
+
+#' buffer_points
+#'
+#' @param pnts
+#' @param radius
+#' @param rectangle
+#'
+#' @return
+#' @export
+#'
+#' @examples
+buffer_points <- function (pnts, radius, rectangle=FALSE) {
+
+  buff_point <- function(pt){
+    if (rectangle){
+      pt$buffer(radius)$bounds()
+    } else {
+      pt$buffer(radius)
+    }
+  }
+
+  pnts$map(buff_point)
+}
+
+
+#' point_extract
+#'
+#' @param img ee image
+#' @param ee_fc an ee feature collection (points)
+#'
+#' @return a dataframe of values for all properties
+#' @export
+#'
+#' @examples
+point_extract <- function(img, ee_fc) {
+  i <- img$sampleRegions(collection = ee_fc, # feature collection here
+                         scale = 30)$ # Cell size of raster
+    getInfo()$
+    features
+
+  .names <- names(i[[1]]$properties)
+
+  vals <- .names|>
+    lapply(function(x) {
+      sapply(i, function(y){
+        y$properties[x]
+      })
+    }) |>
+    lapply(as.numeric)
+
+  names(vals)<- .names
+  return(as.data.frame(vals))
+}
+
+
+
+#' ee_ahist
+#'
+#' gives approximate histograms for all bands in an ee image based on random points
+#'
+#' @param img
+#'
+#' @return a ggplot object with the histogram(s)
+#' @export
+#'
+#' @examples
+ee_ahist <- function(img, ee_fc=NULL){
+
+  if (is.null(ee_fc)){
+    ee_fc <- rando_points(img)
+  }
+
+  s <- point_extract(img, ee_fc)
+  # browser()
+  nb.cols <- length(unique(names(s)))
+  mycolors <- colorRampPalette(RColorBrewer::brewer.pal(8, "Dark2"))(nb.cols)
+
+
+  s |>
+    tidyr::pivot_longer(tidyselect::everything())|>
+    ggplot2::ggplot()+
+    ggplot2::aes(x=value, fill=name)+
+    ggplot2::geom_histogram(ggplot2::aes(y=..density..), bins=30)+
+    ggplot2::geom_density(fill=NA) +
+    ggplot2::facet_wrap(~name, scale='free') +
+    ggplot2::scale_fill_manual(values = mycolors, name='Band Name') +
+    ggplot2::guides(fill="none") +
+    ggplot2::theme_light()
+}
+
+#' rando_points
+#'
+#' creaets random points across the extent of an ee image.
+#'
+#' @param img and ee image
+#' @param n default is 1000. the number of points to generate. Note Earth Engine
+#' has some limits on how many values can be returned.
+#'
+#' @return
+#' @export
+#'
+#' @examples
+rando_points <- function(img, n=1000){
+  ee$FeatureCollection$
+    randomPoints(img$geometry(), n)
+}
+
+
+anti_selection <- function(img, bands){
+  all_bands <- img$bandNames()
+  img$select(all_bands$removeAll(bands))
+}
+
