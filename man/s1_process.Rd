@@ -6,18 +6,21 @@
 \alias{s1_process.ee.imagecollection.ImageCollection}
 \title{Process Sentinel 1 image or collection}
 \usage{
-s1_process(x, aoi.sf, mask = FALSE, ...)
+s1_process(x, reduce = TRUE, mask = FALSE, ...)
 
-\method{s1_process}{ee.image.Image}(x, aoi.sf)
+\method{s1_process}{ee.image.Image}(x)
 
-\method{s1_process}{ee.imagecollection.ImageCollection}(x, aoi.sf)
+\method{s1_process}{ee.imagecollection.ImageCollection}(x, reduce = TRUE)
 }
 \arguments{
 \item{x}{an ee image or collection}
 
-\item{aoi.sf}{an sf/sfc object of the area of interest}
+\item{reduce}{Only for image colections - should the collection be reduced to
+an image.}
 
-\item{...}{}
+\item{mask}{Not used}
+
+\item{...}{not used}
 }
 \value{
 

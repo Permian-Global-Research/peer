@@ -9,12 +9,10 @@ toNatural <- function (img, bands=c('VV', 'VH')){
 
   no_speck_bands = anti_selection(img, bands)
 
-  adjusted <- adjusted$addBands(no_speck_bands)
-
-  adjusted$
+  adjusted <- adjusted$addBands(no_speck_bands)$
     copyProperties(img,c('system:time_start','system:time_end'))
 
-  return(adjusted)
+  return(ee$Image(adjusted))
 }
 
 
@@ -26,10 +24,9 @@ todB <- function(img, bands=c('VV', 'VH')) {
 
   no_speck_bands = anti_selection(img, bands)
 
-  adjusted <- adjusted$addBands(no_speck_bands)
-
-  adjusted$copyProperties(img,c('system:time_start','system:time_end'))
-  return(adjusted)
+  adjusted <- adjusted$addBands(no_speck_bands)$
+    copyProperties(img,c('system:time_start','system:time_end'))
+  return(ee$Image(adjusted))
 }
 
 
@@ -76,10 +73,10 @@ todB <- function(img, bands=c('VV', 'VH')) {
 
    no_speck_bands = anti_selection(img, bands)
 
-   smoothed <- smoothed$addBands(no_speck_bands)
-   smoothed$copyProperties(img,c('system:time_start','system:time_end'))
+   smoothed <- smoothed$addBands(no_speck_bands)$
+     copyProperties(img,c('system:time_start','system:time_end'))
 
-   return(smoothed)
+   return(ee$Image(smoothed))
 }
 
 
@@ -112,9 +109,9 @@ todB <- function(img, bands=c('VV', 'VH')) {
      stop("method not supported - must be either 'DB' or 'DN'")
    }
 
-  stack <- img$addBands(crossPol)
-  stack$copyProperties(img,c('system:time_start','system:time_end'))
-  stack
+  stack <- img$addBands(crossPol)$
+    copyProperties(img,c('system:time_start','system:time_end'))
+  return(ee$Image(stack))
 }
 
 
@@ -142,29 +139,37 @@ todB <- function(img, bands=c('VV', 'VH')) {
    #Pre-processing Functions
 
    # create function to crop with 'Subset' boundaries
-   sb <- function(img) {
-     # Crop by table extension
-     img$clip(aoi)$
-       copyProperties(img,c('system:time_start','system:time_end'))
-   }
+   # sb <- function(x) {
+   #   # Crop by table extension
+   #   x <- x$clip(aoi)
+   #   x <- x$copyProperties(x,c('system:time_start','system:time_end'))
+   #   return(x)
+   # }
 
    # Load Sentinel-1 C-band SAR Ground Range collection (log scale, VV, descending)
-   collection_Full = ee$ImageCollection('COPERNICUS/S1_GRD')$
+   collection <- ee$ImageCollection('COPERNICUS/S1_GRD')$
+     filterDate(start.date, end.date)
+
+   collection_Full = collection$
      filter(ee$Filter$eq('instrumentMode', 'IW'))$
      filter(ee$Filter$listContains('transmitterReceiverPolarisation', 'VV'))$
      filter(ee$Filter$listContains('transmitterReceiverPolarisation', 'VH'))$
      #$filter(ee$Filter$eq('relativeOrbitNumber_start', 164))
      filter(ee$Filter$eq('orbitProperties_pass',  orbit.pass[1]))$
-     filterDate(start.date, end.date)$
+     # filterDate(start.date, end.date)$
      filterMetadata('resolution_meters', 'equals' , 10)$
      filterBounds(aoi)
 
+   ##debugging
+   # vhIwAscMean = collection_Full$select('VH')$median()
+   # return(vhIwAscMean)
+
 
    # Clipping Collections
-   collection <- collection_Full$map(sb)
+   # collection.clip <- collection_Full$map(sb)
 
-   if (length(collection$getInfo()$features)>0){
-     return(collection)
+   if (length(collection_Full$getInfo()$features)>0){
+     return(collection_Full)
    } else {
      stop(paste0("The collection is empty - perhaps try a different ",
                  "orbital.pass value or change the start.date and ",

@@ -65,7 +65,7 @@ l8_collect <- function(aoi, start.date, end.date, min.cloud=90){
 
   aoi_ee <- sf_ext_as_ee(aoi)
 
-  subset_bounds <- function(img) {
+  sb <- function(img) { #  this is a repeat... replace i with function in rgee-helpers.R
     # // Crop by table extension
     img$clip(aoi_ee)$
       copyProperties(img,c('system:time_start','system:time_end'))
@@ -74,7 +74,7 @@ l8_collect <- function(aoi, start.date, end.date, min.cloud=90){
   ee$ImageCollection('LANDSAT/LC08/C01/T1_SR')$
     filterBounds(aoi_ee)$
     filter(ee$Filter$lt('CLOUD_COVER', min.cloud))$
-    map(subset_bounds)$
+    map(sb)$
     filterDate(start.date, end.date)
 }
 

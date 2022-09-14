@@ -75,7 +75,11 @@ terrain_flatten <- function(img) {
   # calculate the ratio for RGB vis
   # ratio = gamma0_VolumeDB$select('VV')$subtract(gamma0_VolumeDB$select('VH'))
 
-  output <- gamma0_VolumeDB$
+  toAdd <- anti_selection(img, c("VV", "VH"))
+
+  output <-toAdd$
+    addBands(gamma0_VolumeDB$
+               select(c("VV", "VH")))$
     addBands(layover)
 
   output
@@ -85,27 +89,28 @@ terrain_flatten <- function(img) {
 #' Process Sentinel 1 image or collection
 #'
 #' @param x an ee image or collection
-#' @param aoi.sf an sf/sfc object of the area of interest
-#' @param mask
-#' @param ...
+#' @param reduce Only for image colections - should the collection be reduced to
+#' an image.
+#' @param mask Not used
+#' @param ... not used
 #'
 #' @return
 #' @export
 #'
 #' @examples
-s1_process <- function(x, aoi.sf, mask=FALSE, ...) {
+s1_process <- function(x,reduce=TRUE, mask=FALSE, ...) {
   UseMethod("s1_process")
 }
 
 #' @rdname s1_process
 #'
 #' @export
-s1_process.ee.image.Image <- function(x, aoi.sf){
+s1_process.ee.image.Image <- function(x){
 
-  aoi <- sf_ext_as_ee(aoi.sf)
+  # aoi <- sf_ext_as_ee(aoi.sf)
 
   x <- s1_wrapper(x)
-  x <- subset_bounds(x, aoi)
+  # x <- x$clip(aoi)
 
   x
 }
@@ -113,12 +118,24 @@ s1_process.ee.image.Image <- function(x, aoi.sf){
 #' @rdname s1_process
 #'
 #' @export
-s1_process.ee.imagecollection.ImageCollection <- function(x, aoi.sf){
-  aoi <- sf_ext_as_ee(aoi.sf)
+s1_process.ee.imagecollection.ImageCollection <- function(x, reduce=TRUE){
+  # aoi <- sf_ext_as_ee(aoi.sf)
 
-  x <- x$map(combine_funcs)
-  x <- x$map(subset_bounds, aoi)
-  x
+  x.rtc <- x$map(s1_wrapper)
+  # x <- x$map(subset_bounds, aoi)
+  if (reduce){
+    # vv <- x$select('VV')$mean()$clip(aoi)
+    # vh <- x$select('VH')$mean()$clip(aoi)
+    #
+    # x.raw <- vv
+
+    vv.mean <- x.rtc$select('VV')$mean()$clip(aoi)$rename('VV-RTC')
+    vh.mean <- x.rtc$select('VH')$mean()$clip(aoi)$rename('VH-RTC')
+    rat.mean <- x.rtc$select('Ratio')$mean()$clip(aoi)$rename('Ratio-RTC')
+
+    x.rtc <- vv.mean$addBands(vh.mean)$addBands(rat.mean)
+  }
+  return(x.rtc)
 }
 
 
@@ -128,7 +145,7 @@ s1_process.ee.imagecollection.ImageCollection <- function(x, aoi.sf){
 #'
 #' @return ee image
 s1_wrapper <- function(x){
-    img <- terrain_flatten(x)|>
+    terrain_flatten(x)|>
       toNatural()|>
       focalSpeckle()|>
       todB() |>
