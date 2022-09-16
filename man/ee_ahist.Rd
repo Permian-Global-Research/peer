@@ -4,10 +4,17 @@
 \alias{ee_ahist}
 \title{ee_ahist}
 \usage{
-ee_ahist(img, ee_fc = NULL)
+ee_ahist(img, ee_fc = NULL, n = 1000)
 }
 \arguments{
-\item{img}{}
+\item{img}{an earth engine image to sample from}
+
+\item{ee_fc}{an earth engine feature class of points to use. Useful when
+comparing between images to maintain consistent sampling. Whn NULL, the points
+are randomly generated.}
+
+\item{n}{The number of random points to sample if ee_fc is NULL. Lower this value
+when the this error occurs: "User memory limit exceeded."}
 }
 \value{
 a ggplot object with the histogram(s)

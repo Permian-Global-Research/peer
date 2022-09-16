@@ -56,26 +56,37 @@ mask_clouds_l8_method <- function(img){
 #' @param start.date
 #' @param end.date
 #' @param min.cloud
+#' @param dataset
 #'
 #' @return
 #' @export
 #'
 #' @examples
-l8_collect <- function(aoi, start.date, end.date, min.cloud=90){
+l8_collect <- function(aoi, start.date, end.date, min.cloud=90,
+                       dataset=c("C02/T1_L2", "C01/T1_SR")){
 
   aoi_ee <- sf_ext_as_ee(aoi)
 
-  sb <- function(img) { #  this is a repeat... replace i with function in rgee-helpers.R
-    # // Crop by table extension
-    img$clip(aoi_ee)$
-      copyProperties(img,c('system:time_start','system:time_end'))
-  }
+  # sb <- function(img) { #  this is a repeat... replace i with function in rgee-helpers.R
+  #   # // Crop by table extension
+  #   img$clip(aoi_ee)$
+  #     copyProperties(img,c('system:time_start','system:time_end'))
+  # }
 
-  ee$ImageCollection('LANDSAT/LC08/C01/T1_SR')$
+  collec <- ee$ImageCollection(paste0('LANDSAT/LC08/', dataset[1]))$
     filterBounds(aoi_ee)$
     filter(ee$Filter$lt('CLOUD_COVER', min.cloud))$
-    map(sb)$
+    # map(sb)$
     filterDate(start.date, end.date)
+
+  if (length(collec$getInfo()$features)>0){
+    return(collec)
+  } else {
+    stop(paste0("The collection is empty - perhaps try a different ",
+                "min.cloud value or change the start.date and ",
+                "end.date values"))
+  }
+
 }
 
 

@@ -93,24 +93,35 @@ terrain_flatten <- function(img) {
 #' an image.
 #' @param mask Not used
 #' @param ... not used
+#' @param aoi.sf sf object to set extent for clipping.
+#' @param rtc Logical - should Terrain Correction/Flattening be applied?
 #'
 #' @return
 #' @export
 #'
 #' @examples
-s1_process <- function(x,reduce=TRUE, mask=FALSE, ...) {
+s1_process <- function(x, aoi.sf, rtc=TRUE, reduce=TRUE, mask=FALSE, ...) {
   UseMethod("s1_process")
 }
 
 #' @rdname s1_process
 #'
 #' @export
-s1_process.ee.image.Image <- function(x){
+s1_process.ee.image.Image <- function(x, aoi.sf, rtc=TRUE){
 
-  # aoi <- sf_ext_as_ee(aoi.sf)
+  aoi <- sf_ext_as_ee(aoi.sf)
 
-  x <- s1_wrapper(x)
-  # x <- x$clip(aoi)
+  .nam <- c("VV", "VH", "Ratio")
+  if (isTRUE(rtc)){
+    x <- s1_wrapper_rtc(x)
+    .nam <- paste0(.nam, "-RTC")
+  } else {
+    x <- s1_wrapper(x)
+  }
+  vv <- x$select('VV')$clip(aoi)$rename(.nam[1])
+  vh <- x$select('VH')$clip(aoi)$rename(.nam[2])
+  rat <- x$select('Ratio')$clip(aoi)$rename(.nam[3])
+  x <- vv$addBands(vh)$addBands(rat)
 
   x
 }
@@ -118,26 +129,49 @@ s1_process.ee.image.Image <- function(x){
 #' @rdname s1_process
 #'
 #' @export
-s1_process.ee.imagecollection.ImageCollection <- function(x, reduce=TRUE){
-  # aoi <- sf_ext_as_ee(aoi.sf)
+s1_process.ee.imagecollection.ImageCollection <- function(x, aoi.sf, rtc=TRUE, reduce=TRUE){
 
-  x.rtc <- x$map(s1_wrapper)
+  aoi <- sf_ext_as_ee(aoi.sf)
+
+  .nam <- c("VV", "VH", "Ratio")
+
+  if (isTRUE(rtc)){
+    x <- x$map(s1_wrapper_rtc)
+    .nam <- paste0(.nam, "-RTC")
+  } else {
+    x <- x$map(s1_wrapper)
+  }
+
   # x <- x$map(subset_bounds, aoi)
   if (reduce){
-    # vv <- x$select('VV')$mean()$clip(aoi)
-    # vh <- x$select('VH')$mean()$clip(aoi)
-    #
-    # x.raw <- vv
+    vv.mean <- x$select('VV')$
+      mean()$
+      clip(aoi)$
+      rename(.nam[1])
+    vh.mean <- x$select('VH')$
+      mean()$
+      clip(aoi)$
+      rename(.nam[2])
+    rat.mean <- x$select('Ratio')$
+      mean()$
+      clip(aoi)$
+      rename(.nam[3])
 
-    vv.mean <- x.rtc$select('VV')$mean()$clip(aoi)$rename('VV-RTC')
-    vh.mean <- x.rtc$select('VH')$mean()$clip(aoi)$rename('VH-RTC')
-    rat.mean <- x.rtc$select('Ratio')$mean()$clip(aoi)$rename('Ratio-RTC')
-
-    x.rtc <- vv.mean$addBands(vh.mean)$addBands(rat.mean)
+    x <- vv.mean$addBands(vh.mean)$addBands(rat.mean)
   }
-  return(x.rtc)
+  return(x)
 }
 
+
+#' s1 RTC processing wrapper
+#'
+#' @param x ee image
+#'
+#' @return ee image
+s1_wrapper_rtc <- function(x){
+    terrain_flatten(x)|>
+    s1_wrapper()
+  }
 
 #' s1 processing wrapper
 #'
@@ -145,10 +179,9 @@ s1_process.ee.imagecollection.ImageCollection <- function(x, reduce=TRUE){
 #'
 #' @return ee image
 s1_wrapper <- function(x){
-    terrain_flatten(x)|>
-      toNatural()|>
-      focalSpeckle()|>
-      todB() |>
-      s1_add_ratio()
+  toNatural(x)|>
+    focalSpeckle()|>
+    todB() |>
+    s1_add_ratio()
 
-  }
+}

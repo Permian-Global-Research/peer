@@ -8,7 +8,8 @@ s1_collect(
   aoi,
   start.date,
   end.date,
-  orbit.pass = c("DESCENDING", "ASCENDING")
+  orbit.pass = c("DESCENDING", "ASCENDING"),
+  dataset = c("S1_GRD", "S1_GRD_FLOAT")
 )
 }
 \arguments{

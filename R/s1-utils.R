@@ -127,27 +127,17 @@ todB <- function(img, bands=c('VV', 'VH')) {
  #'
  #' @examples
  s1_collect <- function(aoi, start.date, end.date,
-                        orbit.pass=c('DESCENDING', 'ASCENDING')){
+                        orbit.pass=c('DESCENDING', 'ASCENDING'),
+                        dataset=c("S1_GRD", "S1_GRD_FLOAT")){
 
-    if (!orbit.pass %in% c('DESCENDING', 'ASCENDING')){
+    if (!orbit.pass[1] %in% c('DESCENDING', 'ASCENDING')){
       stop(paste0("Orbit pass must be either 'DESCENDING' or 'ASCENDING' not '",
                   orbit.pass, "'"))
     }
 
    aoi = sf_ext_as_ee(aoi)
 
-   #Pre-processing Functions
-
-   # create function to crop with 'Subset' boundaries
-   # sb <- function(x) {
-   #   # Crop by table extension
-   #   x <- x$clip(aoi)
-   #   x <- x$copyProperties(x,c('system:time_start','system:time_end'))
-   #   return(x)
-   # }
-
-   # Load Sentinel-1 C-band SAR Ground Range collection (log scale, VV, descending)
-   collection <- ee$ImageCollection('COPERNICUS/S1_GRD')$
+   collection <- ee$ImageCollection(paste0('COPERNICUS/', dataset[1]))$
      filterDate(start.date, end.date)
 
    collection_Full = collection$
@@ -160,14 +150,6 @@ todB <- function(img, bands=c('VV', 'VH')) {
      filterMetadata('resolution_meters', 'equals' , 10)$
      filterBounds(aoi)
 
-   ##debugging
-   # vhIwAscMean = collection_Full$select('VH')$median()
-   # return(vhIwAscMean)
-
-
-   # Clipping Collections
-   # collection.clip <- collection_Full$map(sb)
-
    if (length(collection_Full$getInfo()$features)>0){
      return(collection_Full)
    } else {
@@ -177,9 +159,6 @@ todB <- function(img, bands=c('VV', 'VH')) {
    }
 
  }
-
-
-
 
 
 

@@ -6,14 +6,18 @@
 \alias{s1_process.ee.imagecollection.ImageCollection}
 \title{Process Sentinel 1 image or collection}
 \usage{
-s1_process(x, reduce = TRUE, mask = FALSE, ...)
+s1_process(x, aoi.sf, rtc = TRUE, reduce = TRUE, mask = FALSE, ...)
 
-\method{s1_process}{ee.image.Image}(x)
+\method{s1_process}{ee.image.Image}(x, aoi.sf, rtc = TRUE)
 
-\method{s1_process}{ee.imagecollection.ImageCollection}(x, reduce = TRUE)
+\method{s1_process}{ee.imagecollection.ImageCollection}(x, aoi.sf, rtc = TRUE, reduce = TRUE)
 }
 \arguments{
 \item{x}{an ee image or collection}
+
+\item{aoi.sf}{sf object to set extent for clipping.}
+
+\item{rtc}{Logical - should Terrain Correction/Flattening be applied?}
 
 \item{reduce}{Only for image colections - should the collection be reduced to
 an image.}
