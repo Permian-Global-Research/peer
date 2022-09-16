@@ -1,6 +1,6 @@
 
 
-#' Title
+#' getQABits
 #'
 #' @param img
 #' @param start
@@ -8,9 +8,6 @@
 #' @param newName
 #'
 #' @return
-#' @export
-#'
-#' @examples
 getQABits <- function(img, start, end, newName) {
   # // Compute the bits we need to extract.
   pattern <- sapply(c(start:end), function(x) 2 ^x) |>
@@ -35,35 +32,22 @@ remove_cloud_n_shadows = function(img, base_start, base_end) {
 }
 
 
-#' l8_collect_mask_clouds
-#'
-#' @param x
-#'
-#' @return
-#' @export
-#'
-#' @examples
-l8_mask_clouds <- function(x){
 
-  mask_clouds <- function(img){
+#' mask_clouds_l8_method
+#'
+#' @param img an earth engine ee image
+#'
+#' @return a cloud masked ee image
+mask_clouds_l8_method <- function(img){
     cl.sh <- remove_cloud_n_shadows(img, 3, 3)
     cl <- remove_cloud_n_shadows(img, 5, 5)
     img = img$updateMask(cl.sh)
     img = img$updateMask(cl)
     # img <- img$addBands(c(cl.sh, cl))
     img
-  }
-
-  if (inherits(x, "ee.image.Image" )){
-    return(mask_clouds(x))
-  } else if (inherits(x, "ee.imagecollection.ImageCollection")){
-    return(x$map(mask_clouds))
-  }
-
-
-
-  img.coll$map(mask_clouds)
 }
+
+
 
 
 #' l8_collect
@@ -72,26 +56,37 @@ l8_mask_clouds <- function(x){
 #' @param start.date
 #' @param end.date
 #' @param min.cloud
+#' @param dataset
 #'
 #' @return
 #' @export
 #'
 #' @examples
-l8_collect <- function(aoi, start.date, end.date, min.cloud=90){
+l8_collect <- function(aoi, start.date, end.date, min.cloud=90,
+                       dataset=c("C02/T1_L2", "C01/T1_SR")){
 
   aoi_ee <- sf_ext_as_ee(aoi)
 
-  subset_bounds <- function(img) {
-    # // Crop by table extension
-    img$clip(aoi_ee)$
-      copyProperties(img,c('system:time_start','system:time_end'))
-  }
+  # sb <- function(img) { #  this is a repeat... replace i with function in rgee-helpers.R
+  #   # // Crop by table extension
+  #   img$clip(aoi_ee)$
+  #     copyProperties(img,c('system:time_start','system:time_end'))
+  # }
 
-  ee$ImageCollection('LANDSAT/LC08/C01/T1_SR')$
+  collec <- ee$ImageCollection(paste0('LANDSAT/LC08/', dataset[1]))$
     filterBounds(aoi_ee)$
     filter(ee$Filter$lt('CLOUD_COVER', min.cloud))$
-    map(subset_bounds)$
+    # map(sb)$
     filterDate(start.date, end.date)
+
+  if (length(collec$getInfo()$features)>0){
+    return(collec)
+  } else {
+    stop(paste0("The collection is empty - perhaps try a different ",
+                "min.cloud value or change the start.date and ",
+                "end.date values"))
+  }
+
 }
 
 

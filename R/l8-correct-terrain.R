@@ -1,47 +1,93 @@
+#' Terrain iluminaton correction for landsat 8.
+#'
+#' correct illumination effect for Landsat8 collection/images.
+#'
+#' @title l8_mask_clouds: cloud mask an l8 image or collection
+#'
+#' @param x An landsat8 ee image or image colletion.
+#' @param aoi.sf An area of interest as an sf or sfc object.
+#' @param buf default 10000. The buffer distance.
+#' @param mask currently ignored.
+#' @param ... Not currently used
+#'
+#' @export
+l8_terrain_correct <- function(x, aoi.sf, buf=10000,
+                               mask=FALSE, ...) {
+  UseMethod("l8_terrain_correct")
+}
+
+#' @rdname l8_terrain_correct
+#'
+#' @export
+l8_terrain_correct.ee.image.Image <- function(x, aoi.sf, buf=10000,
+                                              mask=FALSE){
+
+  dtm.aoi <- l8_terrain_dtm(x, aoi.sf)
+
+  x <- illuminationCondition(x, dtm.aoi, buf)
+  return(illuminationCorrection(x, dem, buf)# $ clip(dtm.aoi$aoi)
+         )
+}
+
+#' @rdname l8_terrain_correct
+#'
+#' @export
+l8_terrain_correct.ee.imagecollection.ImageCollection <- function(x, aoi.sf, buf=10000,
+                                              mask=FALSE){
+
+  dtm.aoi <- l8_terrain_dtm(x, aoi.sf)
+
+  combine_illumes <- function(img){
+    img <- illuminationCondition(img, dtm.aoi, buf)
+    illuminationCorrection(img, dem, buf)
+  }
+
+  return(x$map(combine_illumes)) #$map(function(x) x$clip(aoi))
+}
 
 
-#' l8_terrain_correct
+
+
+l8_RTC_msg <- function(){
+  message(crayon::bgCyan(crayon::bgMagenta(
+    "This Terrain Correction function may work less well where topographic changes
+are extreme. Also, If you are getting strange looking results make sure you
+have already run `peer::l8_mask_clouds"
+  )))
+}
+
+
+#' l8_terrain_dtm
 #'
 #' correct illumination effect for Landsat8 collection.
 #'
 #' @param x either an earth engine Collection or Image
 #' @param aoi.sf an sf or sfc object defining the aoi.
 #'
-#' @return
-#' @export
-#'
-#' @examples
-l8_terrain_correct <- function(x, aoi.sf, buf=10000,
-                               mask=FALSE) {
+#' @return A ee image of SRTM DEM.
+l8_terrain_dtm <- function(x, aoi.sf) {
   dem.src ="srtm"
-  message(crayon::bgCyan(crayon::bgMagenta(
-"This Terrain Correction function is somewhat experimental. May work less well
-where topographic changes are extreme. If you are getting strange looking
-results make sure you have already run `peer::l8_mask_clouds"
-    )))
 
   aoi <- sf_ext_as_ee(aoi.sf)
 
-  dem <- dem_as_image(aoi, dem.src)
-
-  combine_illumes <- function(img){
-    img <- illuminationCondition(img, dem, buf)
-    illuminationCorrection(img, dem, buf)
-  }
-
-  if (inherits(x, "ee.image.Image" )){
-    return(combine_illumes(x))
-  } else if (inherits(x, "ee.imagecollection.ImageCollection")){
-    return(x$map(combine_illumes)) #$map(function(x) x$clip(aoi))
-  }
+  dem_as_image(aoi, dem.src)
 }
 
 
+
+#' illuminationCondition
+#'
+#' @param img
+#' @param dem
+#' @param buf
+#'
+#' @return ...
 illuminationCondition <- function (img, dem, buf=10000){
 
   # // Extract image metadata about solar position
   SZ_rad = ee$Image$constant(ee$Number(img$get('SOLAR_ZENITH_ANGLE')))$multiply(pi)$divide(180)$clip(img$geometry()$buffer(buf))
   SA_rad = ee$Image$constant(ee$Number(img$get('SOLAR_AZIMUTH_ANGLE'))$multiply(pi)$divide(180))$clip(img$geometry()$buffer(buf)) # CHECK PARENS HERE! DIFFERENT TO ABOVE.
+
   # // Creat terrain layers
   slp = ee$Terrain$slope(dem)$clip(img$geometry()$buffer(buf))
   slp_rad = ee$Terrain$slope(dem)$multiply(pi)$divide(180)$clip(img$geometry()$buffer(buf))
@@ -80,9 +126,19 @@ illuminationCondition <- function (img, dem, buf=10000){
 
 
 
-# ////////////////////////////////////////////////////////////////////////////////
-#   // Function to apply the Sun-Canopy-Sensor + C (SCSc) correction method to each
-# // image$ Function by Patrick Burns and Matt Macander
+#' Correct Landsat 8
+#'
+#' Function to apply the Sun-Canopy-Sensor + C (SCSc) correction method to a
+#' landsat 8 image. Function by Patrick Burns and Matt Macander.
+#'
+#' @param img
+#' @param dem
+#' @param buf
+#'
+#' @return
+#' @export
+#'
+#' @examples
 illuminationCorrection <- function (img, dem, buf=10000){
   props = img$toDictionary()
   st = img$get('system:time_start')
@@ -115,16 +171,13 @@ illuminationCorrection <- function (img, dem, buf=10000){
       scale= 300,
       maxPixels= 1000000000
     )
-    # values.length().neq(values.filter(ee.Filter.notNull(['item'])).length())
-    # out$values()$filter(ee$Filter$notNull(list('item'))$not())$size()
-    # n <- out$values()$join(',')$index("null")$eq(-1)
-    notNullVals <- out$values()$filter(ee$Filter$notNull(list('item')))
-    # gi2 <- values$length()$neq(values$filter(ee.Filter.notNull(list('item')))$length())
-    nVals <- out$size()
 
+    #check if dictionary has null values
+    notNullVals <- out$values()$filter(ee$Filter$notNull(list('item')))
+    nVals <- out$size()
     nNotNullVals = notNullVals$size()
 
-
+    # run the calculation.
     out_a = ee$Number(out$get('scale'))
     out_b = ee$Number(out$get('offset'))
     out_c = out_b$divide(out_a)
@@ -141,39 +194,27 @@ illuminationCorrection <- function (img, dem, buf=10000){
     )
 
 
-      # SCSc_output <- SCSc_output$set('hasNulls', list(hasNulls=hasNulls))
-    # }
+    # If NULLs introduced then return original (happens when all cells are NA -
+    # i.e. 100% cloud cover.)
+    SCSc_output = ee$Algorithms$If(nVals$neq(nNotNullVals),
+                                   img_plus_ic_mask2$select(band),
+                                   SCSc_output)
 
-      SCSc_output = ee$Algorithms$If(nVals$neq(nNotNullVals),
-                                     img_plus_ic_mask2$select(band),
-                                     SCSc_output)
-
-      return(SCSc_output)
+    return(SCSc_output)
 
   })
 
   # everything about this section feels not very R ish - not a fan but it works.
+  # can we replace with $map?
   SCSccorr <- apply_SCSccorr(bandList[1])
   SCSccorr <- ee$Image(SCSccorr)
-
-  # if (is.null(SCSccorr$getInfo())){
-  #   return(NULL) # if nulls in calculation return NULL i.e remove image from collection
-  # }
 
 
   for (i in bandList[2:length(bandList)]){
     x <- apply_SCSccorr(i)
     x <-  ee$Image(x)
-    if (!is.null(x)) { # unnecessary but maybe useful if I figure out the null screening within the fucntion.
-      SCSccorr <- SCSccorr$addBands(x)
-    }
+    SCSccorr <- SCSccorr$addBands(x)
   }
-
-  # v <- ee$Dictionary(SCSccorr$get("hasNulls"))$values()
-  # SCSccorr <- ee$List(bandList)$
-  #   map(apply_SCSccorr)
-  # return(SCSccorr)
-  # img_SCSccorr = ee$Image(ee$List(bandList)$map(apply_SCSccorr))$addBands(img_plus_ic$select('IC'))
 
   img_SCSccorr <- SCSccorr$
     addBands(img_plus_ic$select('IC'))

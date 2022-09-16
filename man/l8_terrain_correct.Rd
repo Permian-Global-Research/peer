@@ -2,18 +2,30 @@
 % Please edit documentation in R/l8-correct-terrain.R
 \name{l8_terrain_correct}
 \alias{l8_terrain_correct}
-\title{l8_terrain_correct}
+\alias{l8_terrain_correct.ee.image.Image}
+\alias{l8_terrain_correct.ee.imagecollection.ImageCollection}
+\title{l8_mask_clouds: cloud mask an l8 image or collection}
 \usage{
-l8_terrain_correct(x, aoi.sf, buf = 10000, mask = FALSE)
+l8_terrain_correct(x, aoi.sf, buf = 10000, mask = FALSE, ...)
+
+\method{l8_terrain_correct}{ee.image.Image}(x, aoi.sf, buf = 10000, mask = FALSE)
+
+\method{l8_terrain_correct}{ee.imagecollection.ImageCollection}(x, aoi.sf, buf = 10000, mask = FALSE)
 }
 \arguments{
-\item{x}{either an earth engine Collection or Image}
+\item{x}{An landsat8 ee image or image colletion.}
 
-\item{dem.src}{}
-}
-\value{
+\item{aoi.sf}{An area of interest as an sf or sfc object.}
 
+\item{buf}{default 10000. The buffer distance.}
+
+\item{mask}{currently ignored.}
+
+\item{...}{Not currently used}
 }
 \description{
-correct illumination effect for Landsat8 collection.
+Terrain iluminaton correction for landsat 8.
+}
+\details{
+correct illumination effect for Landsat8 collection/images.
 }

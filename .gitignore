@@ -5,3 +5,7 @@
 
 # dev workspace
 deving/
+
+python/
+
+*.tif

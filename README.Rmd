@@ -8,6 +8,7 @@ output: github_document
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
+  cache = TRUE,
   fig.path = "man/figures/README-",
   out.width = "100%"
 )
@@ -38,7 +39,7 @@ devtools::install()
 
 Quick example creating a False Colour Composite from Landsat 8 data.
 
-```{r example, warn=FALSE, eval=FALSE}
+```{r example, warn=FALSE, eval=TRUE}
 library(rgee)
 ee_Initialize(quiet=TRUE)
 library(peer)
@@ -73,6 +74,24 @@ aoi_cent <- st_centroid(kuamut) %>%
 
 Map$setCenter(lon = aoi_cent[1], lat = aoi_cent[2], zoom = 10)
 m<-Map$addLayer(x_img, vizParams, 'FC-composite-2021')
+print(m)
 ```
 
 ![FCC-example](man/FCC-21.png)
+
+
+```{r seninel-1, eval=FALSE}
+
+s1.test <- s1_collect(kuamut, start.date = '2016-01-01',
+                      end.date= '2016-12-31', orbit.pass = 'DESCENDING' )#$
+
+x.rtc <- s1_process(s1.test)
+
+x.no.rtc <- s1_process(s1.test, rtc = FALSE)
+
+MapAll(x.no.rtc) +
+  MapAll(x.rtc)
+
+
+```
+
