@@ -4,7 +4,7 @@
 \alias{MapAll}
 \title{MapAll}
 \usage{
-MapAll(img, zoom = 11, pal = viridisLite::plasma(256), opacity = 1)
+MapAll(img, zoom = 11, pal = viridisLite::plasma(256), opacity = 1, .n = 150)
 }
 \arguments{
 \item{img}{an ee image}

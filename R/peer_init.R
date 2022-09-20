@@ -8,7 +8,6 @@
 #' @return
 #' @export
 #'
-peer_init <- function(...){
-  library(rgee)
-  rgee::ee_Initialize(...)
+peer_init <- function(user = NULL,..., gcs=TRUE){
+  rgee::ee_Initialize(user=user, gcs=gcs, ...)
 }
