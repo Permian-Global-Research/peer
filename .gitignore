@@ -3,6 +3,8 @@
 .RData
 .Ruserdata
 
+README_cache/*
+
 # dev workspace
 deving/
 
