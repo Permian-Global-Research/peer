@@ -101,13 +101,21 @@ s1_adugna_wrapper <- function(x){
 
   x <- ee$ImageCollection(MonoTemporal_Filter(x,
                                          KERNEL_SIZE = 9,
-                                         SPECKLE_FILTER = 'BOXCAR'))
-    slope_correction(x,
+                                         SPECKLE_FILTER = 'GAMMA MAP'))
+
+  # for debugging
+  # return(x$
+  #          map(add_ratio_lin)$
+  #          map(lin_to_db2))
+
+  x <-  slope_correction(x,
       TERRAIN_FLATTENING_MODEL = 'VOLUME',
       DEM = ee$Image('USGS/SRTMGL1_003'),
       TERRAIN_FLATTENING_ADDITIONAL_LAYOVER_SHADOW_BUFFER = 0)$
     map(add_ratio_lin)$
     map(lin_to_db2)
+
+  return(x)
 
 
 }

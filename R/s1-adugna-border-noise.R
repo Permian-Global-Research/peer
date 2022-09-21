@@ -17,7 +17,7 @@
 
 maskAngLT452 <- function(image){
   # """
-  #   mask out angles >= 45$23993
+  #   mask out angles >= 45.23993
   #
   #   Parameters
   #   ----------
@@ -40,7 +40,7 @@ maskAngLT452 <- function(image){
 
 maskAngGT30 <- function(image){
   # """
-  #   mask out angles <= 30$63993
+  #   mask out angles <= 30.63993
   #
   #   Parameters
   #   ----------
@@ -111,7 +111,7 @@ f_mask_edges <- function(image){
   db_img = lin_to_db(image)
   output = maskAngGT30(db_img)
   output = maskAngLT452(output)
-  #output = maskEdge(output)
+  output = maskEdge(output)
   output = db_to_lin(output)
 
   output$set('system:time_start', image$get('system:time_start'))
