@@ -9,11 +9,12 @@
 #' @export
 #'
 #' @examples
-MapAll <- function(img, zoom=11, pal=viridisLite::plasma(256), opacity=1){
+MapAll <- function(img, zoom=11, pal=viridisLite::plasma(256), opacity=1,
+                   .n = 150){
   .names <- img_band_names(img)
 
 
-  ee_fc <- rando_points(img)
+  ee_fc <- rando_points(img, .n)
 
   s <- point_extract(img, ee_fc)
   mins <- dplyr::summarise_all(s, min)

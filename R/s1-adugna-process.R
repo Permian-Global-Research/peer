@@ -61,15 +61,15 @@ s1_adugna_process.ee.imagecollection.ImageCollection <- function(x, aoi.sf, redu
   # x <- x$map(subset_bounds, aoi)
   if (reduce){
     vv.mean <- x$select('VV')$
-      mean()$
+      median()$
       clip(aoi)$
       rename(.nam[1])
     vh.mean <- x$select('VH')$
-      mean()$
+      median()$
       clip(aoi)$
       rename(.nam[2])
     rat.mean <- x$select('VVVH_ratio')$
-      mean()$
+      median()$
       clip(aoi)$
       rename(.nam[3])
 
@@ -102,12 +102,20 @@ s1_adugna_wrapper <- function(x){
   x <- ee$ImageCollection(MonoTemporal_Filter(x,
                                          KERNEL_SIZE = 9,
                                          SPECKLE_FILTER = 'GAMMA MAP'))
-    slope_correction(x,
+
+  # for debugging
+  # return(x$
+  #          map(add_ratio_lin)$
+  #          map(lin_to_db2))
+
+  x <-  slope_correction(x,
       TERRAIN_FLATTENING_MODEL = 'VOLUME',
       DEM = ee$Image('USGS/SRTMGL1_003'),
       TERRAIN_FLATTENING_ADDITIONAL_LAYOVER_SHADOW_BUFFER = 0)$
     map(add_ratio_lin)$
     map(lin_to_db2)
+
+  return(x)
 
 
 }

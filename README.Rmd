@@ -30,10 +30,13 @@ You can install the development version of peerm from [GitHub](https://github.co
 
 first clone the library - SSH probably best option. Then open the project and run
 the following in R:
-``` r
-# install.packages("devtools")
-devtools::install()
+
+```{r, eval=FALSE}
+install.packages("remotes")
+remotes::install_github(repo="Permian-Global-Research/peer",
+                        auth_token = "[MY-TOKEN]")
 ```
+
 
 ## Example
 
@@ -92,6 +95,10 @@ x.no.rtc <- s1_process(s1.test, rtc = FALSE)
 MapAll(x.no.rtc) +
   MapAll(x.rtc)
 
+
+#--- OR USE METHODS FROM ADUGNA ET AL. 2021. ONLY DEFAULTS WORKING FOR NOW WITH:
+
+s1.proc <- s1_adugna_process(s1.test, kuamut)
 
 ```
 
