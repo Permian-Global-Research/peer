@@ -10,7 +10,7 @@ experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](h
 
 <!-- badges: end -->
 
-The goal of peerm is to provide easy access to useful
+The goal of peer is to provide easy access to useful
 [{rgee}](https://r-spatial.github.io/rgee/) functions - like composites
 etc.
 
@@ -23,8 +23,9 @@ first clone the library - SSH probably best option. Then open the
 project and run the following in R:
 
 ``` r
-# install.packages("devtools")
-devtools::install()
+install.packages("remotes")
+remotes::install_github(repo="Permian-Global-Research/peer",
+                        auth_token = "[MY-TOKEN]")
 ```
 
 ## Example
@@ -66,6 +67,25 @@ aoi_cent <- st_centroid(kuamut) %>%
 
 Map$setCenter(lon = aoi_cent[1], lat = aoi_cent[2], zoom = 10)
 m<-Map$addLayer(x_img, vizParams, 'FC-composite-2021')
+print(m)
 ```
 
 ![FCC-example](man/FCC-21.png)
+
+``` r
+
+s1.test <- s1_collect(kuamut, start.date = '2016-01-01',
+                      end.date= '2016-12-31', orbit.pass = 'DESCENDING' )#$
+
+x.rtc <- s1_process(s1.test)
+
+x.no.rtc <- s1_process(s1.test, rtc = FALSE)
+
+MapAll(x.no.rtc) +
+  MapAll(x.rtc)
+
+
+#--- OR USE METHODS FROM ADUGNA ET AL. 2021. ONLY DEFAULTS WORKING FOR NOW WITH:
+
+s1.proc <- s1_adugna_process(s1.test, kuamut)
+```
